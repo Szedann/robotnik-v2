@@ -8,9 +8,7 @@ import {
   User,
   type APIApplicationCommand,
   type APIApplicationCommandBasicOption,
-  type APIApplicationCommandOption,
   type APIApplicationCommandOptionBase,
-  type ApplicationCommandOption,
   type Channel,
   type CommandInteractionOption,
   type RESTPostAPIChatInputApplicationCommandsJSONBody,
@@ -50,12 +48,6 @@ interface OptionOutputs {
   number: number;
 }
 
-// interface Option extends APIApplicationCommandBasicOption {
-//   type: ApplicationCommandOptionType;
-//   description: string;
-//   required?: boolean;
-// }
-
 type Option = Omit<APIApplicationCommandBasicOption, "name">;
 
 type WithRequired<T, K extends keyof T> = T & {
@@ -74,8 +66,6 @@ type Truthy<T> = T extends boolean ? T : false;
 type Optional<T, Required extends boolean> = Required extends true
   ? T
   : T | null | undefined;
-
-// type L = CommandOptionOutputs<{test: {description: "test", required: false, type: "string"}}>
 
 type CommandParams = Omit<
   WithRequired<Partial<APIApplicationCommand>, "description">,
@@ -124,18 +114,6 @@ export function createChatInputCommand<O extends Record<string, Option>>(
   return new Command(name, options, params, component);
 }
 
-// type SettersToOptions<T> = {
-//   [K in keyof T as K extends `set${infer P}`
-//     ? Uncapitalize<P>
-//     : never]: T[K] extends (..._: infer O) => {} ? ExtractIfSingle<O> : never;
-// };
-
-// type OptionOptions<T extends keyof typeof OptionInstances> = SettersToOptions<
-//   InstanceType<(typeof OptionInstances)[T]>
-// >;
-
-type ExtractIfSingle<T extends Array<unknown>> = T extends [infer R] ? R : T;
-
 function addOption<
   T extends keyof OptionOutputs,
   O extends Omit<
@@ -157,11 +135,18 @@ type AddOptionTypes = {
   ) => O & { type: (typeof OptionKeys)[K] };
 };
 
+//@ts-expect-error it's all in the getter
 export const option: AddOptionTypes = new Proxy(
   {},
   {
-    get(target, p, receiver) {
-      return (a) => addOption(p, a);
+    get<
+      K extends keyof OptionOutputs,
+      O extends Omit<
+        WithRequired<Partial<OptionParameters<K>>, "description">,
+        "name"
+      >,
+    >(_: {}, p: K) {
+      return (a: O) => addOption(p, a);
     },
   }
 );
@@ -172,15 +157,17 @@ export function parseOptions<O extends Record<string, Option>>(
 ): CommandOptionOutputs<O> {
   const options: Partial<CommandOptionOutputs<O>> = {};
   for (const key in command.options) {
-    const { name, type, ...data } = interaction.options.get(key);
-    for (const index in data) {
-      if (data[index]) {
-        options[key] = data[index];
-        break;
-      }
-    }
+    const data = interaction.options.get(key);
+    if (!data) continue;
+    //@ts-expect-error yeah
+    options[key] =
+      data.value ??
+      data.user ??
+      data.role ??
+      data.message ??
+      data.member ??
+      data.channel ??
+      data.attachment;
   }
   return options as CommandOptionOutputs<O>;
 }
-
-const o = option.integer({ description: "" });
