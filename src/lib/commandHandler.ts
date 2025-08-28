@@ -72,10 +72,8 @@ export default async function (client: Client) {
   const djsx = new DJSXRendererManager();
 
   client.on("interactionCreate", (interaction) => {
-    console.log("interaction");
     if (!interaction.isCommand()) return;
     if (!interaction.isChatInputCommand()) return;
-    console.log(interaction.commandName);
     const command = commands.get(interaction.commandName);
     if (!command) return;
 
