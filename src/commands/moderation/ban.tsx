@@ -1,3 +1,3 @@
-import { createCommand } from "@lib/command";
+import { createChatInputCommand } from "@lib/command";
 
 // export const Command = createCommand()

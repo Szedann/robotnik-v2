@@ -1,10 +1,13 @@
+import commandHandler from "@lib/commandHandler";
 import { Client } from "discord.js";
-import { loadCommands } from "./lib/commandHandler";
 
-const client = new Client({
-  intents: []
-})
+export const client = new Client({
+  intents: [],
+});
 
-// client.login()
+client.login(Bun.env["DISCORD_TOKEN"]);
+client.on("clientReady", (client) => {
+  console.log(`authenticated as ${client.user.tag}`);
+});
 
-loadCommands()
+commandHandler(client);

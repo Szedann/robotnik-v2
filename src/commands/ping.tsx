@@ -1,16 +1,13 @@
-import { createCommand, option } from "@lib/command";
+import { createChatInputCommand, option } from "@lib/command";
 import { PermissionFlagsBits } from "discord.js";
 
-export const Command = createCommand("ping", {
-  description: "",
-  defaultMemberPermissions: PermissionFlagsBits.SendMessages,
+export const Command = createChatInputCommand("ping", {
+  description: "Ping!",
+  default_member_permissions: PermissionFlagsBits.SendMessages.toString(),
   options: {
     name: option.string({
       description: "The word to reply",
       choices: [{ name: "test", value: "test" }],
-    }),
-    file: option.attachment({
-      description: "the file to attach",
       required: true,
     }),
     member: option.mentionable({
@@ -18,6 +15,7 @@ export const Command = createCommand("ping", {
     }),
   },
   component({ interaction, options }) {
+    console.log(interaction.user.tag);
     return (
       <message v2>
         <text>{options.name}</text>
