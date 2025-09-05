@@ -9,6 +9,7 @@ import {
   type APIApplicationCommand,
   type APIApplicationCommandBasicOption,
   type APIApplicationCommandOptionBase,
+  type Awaitable,
   type Channel,
   type CommandInteractionOption,
   type RESTPostAPIChatInputApplicationCommandsJSONBody,
@@ -72,20 +73,20 @@ type CommandParams = Omit<
   "name" | "options"
 >;
 
-export class Command<O extends Record<string, Option>> {
+export class Command<O extends Record<string, Option> = {}> {
   constructor(
     public readonly name: string,
-    public readonly options: O,
     public readonly params: CommandParams,
     public readonly component: (_: {
       interaction: CommandInteraction;
       options: CommandOptionOutputs<O>;
-    }) => React.ReactNode
+    }) => Awaitable<React.ReactNode>,
+    public readonly options?: O
   ) {}
   // public name: string;
   private generate(): RESTPostAPIChatInputApplicationCommandsJSONBody {
     const options: APIApplicationCommandBasicOption[] = Object.entries(
-      this.options
+      this.options ?? {}
     ).map(([name, option]) => ({
       ...option,
       name,
@@ -100,18 +101,18 @@ export class Command<O extends Record<string, Option>> {
   }
 }
 
-export function createChatInputCommand<O extends Record<string, Option>>(
+export function createChatInputCommand<O extends Record<string, Option> = {}>(
   name: string,
   settings: {
-    options: O;
+    options?: O;
     component: (_: {
       interaction: CommandInteraction;
       options: CommandOptionOutputs<O>;
-    }) => React.ReactNode;
+    }) => Awaitable<React.ReactNode>;
   } & CommandParams
 ) {
   const { options, component, ...params } = settings;
-  return new Command(name, options, params, component);
+  return new Command(name, params, component, options);
 }
 
 function addOption<
